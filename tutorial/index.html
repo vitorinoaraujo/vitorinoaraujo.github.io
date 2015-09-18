@@ -11,12 +11,20 @@
   <body>
     <div id="content"></div>
     <script type="text/jsx">
-      var data = [
-        {author: "Pete Hunt", text: "This is one comment"},
-        {author: "Jordan Walke", text: "This is *another* comment"}
-      ];
+      var Comment = React.createClass({
+        render: function() {
+          var rawMarkup = marked(this.props.children.toString(), {sanitize: true});
+          return (
+            <div className="comment">
+              <h2 className="commentAuthor">
+                {this.props.author}
+              </h2>
+              <span dangerouslySetInnerHTML={{__html: rawMarkup}} />
+            </div>
+          );
+        }
+      });
 
-      // tutorial1.js
       var CommentBox = React.createClass({
         loadCommentsFromServer: function() {
           $.ajax({
@@ -32,6 +40,9 @@
           });
         },
         handleCommentSubmit: function(comment) {
+          var comments = this.state.data;
+          var newComments = comments.concat([comment]);
+          this.setState({data: newComments});
           $.ajax({
             url: this.props.url,
             dataType: 'json',
@@ -63,12 +74,14 @@
         }
       });
 
-      // tutorial2.js
       var CommentList = React.createClass({
         render: function() {
-          var commentNodes = this.props.data.map(function (comment) {
+          var commentNodes = this.props.data.map(function(comment, index) {
             return (
-              <Comment author={comment.author}>
+              // `key` is a React-specific concept and is not mandatory for the
+              // purpose of this tutorial. if you're curious, see more here:
+              // http://facebook.github.io/react/docs/multiple-components.html#dynamic-children
+              <Comment author={comment.author} key={index}>
                 {comment.text}
               </Comment>
             );
@@ -92,7 +105,6 @@
           this.props.onCommentSubmit({author: author, text: text});
           React.findDOMNode(this.refs.author).value = '';
           React.findDOMNode(this.refs.text).value = '';
-          return;
         },
         render: function() {
           return (
@@ -105,20 +117,10 @@
         }
       });
 
-      // tutorial4.js
-      var Comment = React.createClass({
-        render: function() {
-          var rawMarkup = marked(this.props.children.toString(), {sanitize: true});
-          return (
-            <div className="comment">
-              <h2 className="commentAuthor">
-                {this.props.author}
-              </h2>
-              <span dangerouslySetInnerHTML={{__html: rawMarkup}} />
-            </div>
-          );
-        }
-      });
+      React.render(
+        <CommentBox url="comments.json" pollInterval={2000} />,
+        document.getElementById('content')
+      );
 
 
     </script>
